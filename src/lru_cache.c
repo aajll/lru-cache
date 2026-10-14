@@ -4,7 +4,7 @@
  * @file: lru_cache.c
  *
  * @brief
- *    Implementation of the MISRA C compliant LRU Cache.
+ *    Implementation of the fixed-size LRU cache.
  *
  * Deviation: MISRA C:2012 Rule 15.5 (Advisory) — multiple return statements.
  * Rationale: Each public function uses early-return for precondition checks.

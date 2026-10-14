@@ -4,7 +4,7 @@
  * @file: lru_cache.h
  *
  * @brief
- *    MISRA C & IEC-61508 compliant LRU Cache with configurable lookup.
+ *    Fixed-size LRU cache with configurable lookup.
  *
  * This module provides a fixed-size LRU cache suitable for safety-critical
  * systems. Lookup strategy (Hash vs Linear) is selected at compile time.

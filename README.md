@@ -14,7 +14,6 @@ safety-critical embedded systems.
   linear scan (`O(n)`) at compile time with a single macro.
 - **Deterministic WCET** — every loop is bounded by a compile-time constant
   (`LRU_CACHE_MAX_ENTRIES` or `LRU_CACHE_MAX_PROBES`).
-- **MISRA C:2012 style** — suitable for use in IEC 61508 environments.
 
 ## Installation
 
