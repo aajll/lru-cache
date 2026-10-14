@@ -41,27 +41,29 @@ install_headers('include' / 'lru_cache.h', subdir: 'lru_cache')
 
 # ── Application core library ───────────────────────────────────────────────────
 
-library_src = ['src/lru_cache.c']
-
-lru_cache_lib = static_library(
-  'lru-cache',
-  library_src,
-  include_directories: public_headers,
-  install: true,
-)
-
-lru_cache_dep = declare_dependency(
-  include_directories: public_headers,
-  link_with: lru_cache_lib,
-)
-
-meson.override_dependency('lru-cache', lru_cache_dep)
+library_src = files('src/lru_cache.c')
 
 if get_option('lookup_strategy') == 'linear'
   lru_strategy_arg = '-DLRU_CACHE_LOOKUP_STRATEGY=LRU_CACHE_LOOKUP_LINEAR'
 else
   lru_strategy_arg = '-DLRU_CACHE_LOOKUP_STRATEGY=LRU_CACHE_LOOKUP_HASH'
 endif
+
+lru_cache_lib = static_library(
+  'lru-cache',
+  library_src,
+  c_args: lru_strategy_arg,
+  include_directories: public_headers,
+  install: true,
+)
+
+lru_cache_dep = declare_dependency(
+  compile_args: lru_strategy_arg,
+  include_directories: public_headers,
+  link_with: lru_cache_lib,
+)
+
+meson.override_dependency('lru-cache', lru_cache_dep)
 
 # ── pkg-config ─────────────────────────────────────────────────────────────────
 
