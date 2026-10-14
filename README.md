@@ -9,7 +9,7 @@ safety-critical embedded systems.
 
 - **No dynamic memory** — fixed-size static arrays; no `malloc` / `free`.
 - **Pointer-free internals** — the doubly-linked list uses integer indices,
-  satisfying MISRA C:2012 Rule 18.4 (no pointer arithmetic).
+  satisfying MISRA C:2023 Rule 18.4 (no pointer arithmetic).
 - **Configurable lookup** — switch between a hash table (`O(1)` average) and
   linear scan (`O(n)`) at compile time with a single macro.
 - **Deterministic WCET** — every loop is bounded by a compile-time constant

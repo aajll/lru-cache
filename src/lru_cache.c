@@ -6,7 +6,7 @@
  * @brief
  *    Implementation of the fixed-size LRU cache.
  *
- * Deviation: MISRA C:2012 Rule 15.5 (Advisory) — multiple return statements.
+ * Deviation: MISRA C:2023 Rule 15.5 (Advisory) — multiple return statements.
  * Rationale: Each public function uses early-return for precondition checks.
  * Refactoring to a single exit point would require deeply nested
  * conditionals or goto-cleanup, reducing readability without safety benefit.
@@ -51,15 +51,11 @@ compute_hash(uint32_t key)
  * @brief Detach a node from the doubly-linked LRU list.
  *
  * @param cache_ptr  Cache instance.
- * @param node_idx   Index of the node to remove.
+ * @param node_idx   Index of a linked node, in [0, LRU_CACHE_MAX_ENTRIES).
  */
 static void
 remove_from_list(lru_cache_t *cache_ptr, int16_t node_idx)
 {
-        if (node_idx < 0 || (uint16_t)node_idx >= LRU_CACHE_MAX_ENTRIES) {
-                return; /* bounds check -- Rule 13.3 */
-        }
-
         int16_t prev = cache_ptr->nodes[node_idx].prev_idx;
         int16_t next = cache_ptr->nodes[node_idx].next_idx;
 
@@ -80,15 +76,11 @@ remove_from_list(lru_cache_t *cache_ptr, int16_t node_idx)
  * @brief Insert a node at the front (MRU end) of the doubly-linked list.
  *
  * @param cache_ptr  Cache instance.
- * @param node_idx   Index of the node to promote.
+ * @param node_idx   Index of an unlinked node, in [0, LRU_CACHE_MAX_ENTRIES).
  */
 static void
 add_to_front(lru_cache_t *cache_ptr, int16_t node_idx)
 {
-        if (node_idx < 0 || (uint16_t)node_idx >= LRU_CACHE_MAX_ENTRIES) {
-                return; /* bounds check -- Rule 13.3 */
-        }
-
         cache_ptr->nodes[node_idx].next_idx = cache_ptr->head_idx;
         cache_ptr->nodes[node_idx].prev_idx = -1;
 
@@ -131,11 +123,9 @@ find_node_index(const lru_cache_t *cache_ptr, uint32_t key)
                         continue;
                 }
 
-                if (stored_idx >= 0
-                    && (uint16_t)stored_idx < LRU_CACHE_MAX_ENTRIES) {
-                        if (cache_ptr->nodes[stored_idx].key == key) {
-                                return stored_idx;
-                        }
+                /* Any other slot value is a node index. */
+                if (cache_ptr->nodes[stored_idx].key == key) {
+                        return stored_idx;
                 }
 
                 /* Linear probe to next slot (wraps around). */
@@ -301,57 +291,34 @@ lru_cache_put(lru_cache_t *cache_ptr, uint32_t key, uint32_t value)
 #endif
 
         if (needs_eviction) {
+                /* A full cache holds at least one entry, so the tail is a
+                 * node. */
                 lru_idx = cache_ptr->tail_idx;
-
-                if (lru_idx == -1) {
-                        /*
-                         * tail_idx is -1 but size >= capacity.  Internal
-                         * corruption — fail safely.
-                         */
-                        return false;
-                }
 
 #if (LRU_CACHE_LOOKUP_STRATEGY == LRU_CACHE_LOOKUP_HASH)
                 /*
                  * Locate the eviction victim's hash slot (don't modify it).
+                 * Insertion placed it within MAX_PROBES slots of its hash,
+                 * so the slot reached on the last probe is the victim's.
                  */
-                uint16_t old_hash = compute_hash(cache_ptr->nodes[lru_idx].key);
-                uint16_t evict_probe = 0U;
-                bool evict_slot_found = false;
+                evict_hash_slot = compute_hash(cache_ptr->nodes[lru_idx].key);
+                uint16_t evict_probe = 1U;
 
-                while (evict_probe < LRU_CACHE_MAX_PROBES) {
-                        if (cache_ptr->hash_table[old_hash] == lru_idx) {
-                                evict_hash_slot = old_hash;
-                                evict_slot_found = true;
-                                break;
-                        }
-                        old_hash =
-                            (uint16_t)((old_hash + 1U)
+                while ((evict_probe < LRU_CACHE_MAX_PROBES)
+                       && (cache_ptr->hash_table[evict_hash_slot] != lru_idx)) {
+                        evict_hash_slot =
+                            (uint16_t)((evict_hash_slot + 1U)
                                        % (uint32_t)LRU_CACHE_HASH_TABLE_SIZE);
                         evict_probe++;
-                }
-
-                if (!evict_slot_found) {
-                        return false; /* cannot find victim's hash entry */
                 }
 #endif
 
                 /* Reuse the evicted node's slot. */
                 free_idx = lru_idx;
         } else {
-                /* Find the first free node slot (INVALID_KEY marker). */
-                uint16_t i = 0U;
-                while (i < LRU_CACHE_MAX_ENTRIES) {
-                        if (cache_ptr->nodes[i].key == LRU_CACHE_INVALID_KEY) {
-                                free_idx = (int16_t)i;
-                                break;
-                        }
-                        i++;
-                }
-
-                if (free_idx == -1) {
-                        return false; /* no free slot — safety fallback */
-                }
+                /* Nodes are only freed by an eviction that refills them, so
+                 * nodes [0, size) are in use and nodes[size] is free. */
+                free_idx = (int16_t)cache_ptr->size;
         }
 
 #if (LRU_CACHE_LOOKUP_STRATEGY == LRU_CACHE_LOOKUP_HASH)

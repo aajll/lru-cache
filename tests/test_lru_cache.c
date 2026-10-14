@@ -385,6 +385,40 @@ test_capacity_clamping(void)
 }
 
 /* =========================================================================
+ * Zero capacity is treated as one: the cache holds a single entry
+ * ========================================================================= */
+
+static int
+test_zero_capacity_holds_one(void)
+{
+        lru_cache_t cache;
+        uint32_t val = 0U;
+
+        lru_cache_init(&cache, 0U);
+        if (cache.capacity != 1U) {
+                return 1;
+        }
+
+        if (lru_cache_put(&cache, 1U, 10U) != true
+            || lru_cache_put(&cache, 2U, 20U) != true) {
+                return 1;
+        }
+
+        /* The second put evicted the first. */
+        if (lru_cache_get(&cache, 1U, &val) != false) {
+                return 1;
+        }
+        if (lru_cache_get(&cache, 2U, &val) != true || val != 20U) {
+                return 1;
+        }
+        if (cache.size != 1U) {
+                return 1;
+        }
+
+        return 0;
+}
+
+/* =========================================================================
  * Test 11: Sequential evictions maintain correct LRU ordering
  * ========================================================================= */
 
@@ -880,6 +914,146 @@ test_heavy_eviction_tombstone_cleanup(void)
         return 0;
 }
 
+/* -------------------------------------------------------------------------
+ * Probe-chain tests. Keys are chosen by their hash so that each test lays
+ * out the slots it needs.
+ * ------------------------------------------------------------------------- */
+
+/* Next slot after @p slot, wrapping. */
+static uint16_t
+slot_after(uint16_t slot, uint16_t n)
+{
+        return (uint16_t)((slot + n) % (uint32_t)LRU_CACHE_HASH_TABLE_SIZE);
+}
+
+/* First key at or after @p start whose hash is @p slot. */
+static uint32_t
+key_with_hash(uint16_t slot, uint32_t start)
+{
+        uint32_t key = start;
+
+        while (compute_hash(key) != slot) {
+                key++;
+        }
+        return key;
+}
+
+/* =========================================================================
+ * An entry displaced to the last probe slot is evicted from that slot, and
+ * evicting a run of collided entries returns every slot to empty
+ * ========================================================================= */
+
+static int
+test_evict_collided_run(void)
+{
+        lru_cache_t cache;
+        uint32_t val = 0U;
+        const uint16_t h = 3U;
+        uint32_t run[LRU_CACHE_MAX_PROBES];
+        uint32_t key = 1U;
+
+        lru_cache_init(&cache, (uint16_t)LRU_CACHE_MAX_PROBES);
+
+        /* Fill slots h .. h + MAX_PROBES - 1 with keys that all hash to h. */
+        for (uint16_t i = 0U; i < LRU_CACHE_MAX_PROBES; i++) {
+                run[i] = key_with_hash(h, key);
+                key = run[i] + 1U;
+                if (lru_cache_put(&cache, run[i], i) != true) {
+                        return 1;
+                }
+                if (cache.hash_table[slot_after(h, i)] != (int16_t)i) {
+                        return 1;
+                }
+        }
+
+        /*
+         * Evict the run oldest first with keys hashing well clear of it.
+         * Each victim sits behind the tombstones of the ones before it; the
+         * last sits on the final probe slot.
+         */
+        for (uint16_t i = 0U; i < LRU_CACHE_MAX_PROBES; i++) {
+                uint16_t far = slot_after(h, (uint16_t)(6U + (2U * i)));
+                uint32_t fresh = key_with_hash(far, 0x10000U);
+
+                if (lru_cache_put(&cache, fresh, 100U + i) != true) {
+                        return 1;
+                }
+                if (lru_cache_get(&cache, run[i], &val) != false) {
+                        return 1;
+                }
+                if (lru_cache_get(&cache, fresh, &val) != true
+                    || val != 100U + i) {
+                        return 1;
+                }
+        }
+
+        /* The run's trailing slot is empty, so its tombstones are cleared. */
+        for (uint16_t i = 0U; i < LRU_CACHE_MAX_PROBES; i++) {
+                if (cache.hash_table[slot_after(h, i)] != (int16_t)-1) {
+                        return 1;
+                }
+        }
+
+        return 0;
+}
+
+/* =========================================================================
+ * An insert reuses a tombstone ahead of its probe chain
+ * ========================================================================= */
+
+static int
+test_insert_reuses_tombstone(void)
+{
+        lru_cache_t cache;
+        uint32_t val = 0U;
+        const uint16_t h = 9U;
+        uint32_t a = key_with_hash(h, 1U);
+        uint32_t b = key_with_hash(h, a + 1U);
+        uint32_t c = key_with_hash(slot_after(h, 8U), 1U);
+        uint32_t d = key_with_hash(h, b + 1U);
+
+        lru_cache_init(&cache, 2U);
+
+        /* a at h, b at h + 1. */
+        if (lru_cache_put(&cache, a, 1U) != true
+            || lru_cache_put(&cache, b, 2U) != true) {
+                return 1;
+        }
+
+        /* c evicts a; slot h becomes a tombstone ahead of b. */
+        if (lru_cache_put(&cache, c, 3U) != true) {
+                return 1;
+        }
+        if (cache.hash_table[h] != LRU_CACHE_HASH_TOMBSTONE) {
+                return 1;
+        }
+
+        /* d hashes to h, evicts b, and takes the tombstone at h. */
+        if (lru_cache_put(&cache, d, 4U) != true) {
+                return 1;
+        }
+        if (cache.hash_table[h] < 0
+            || cache.nodes[cache.hash_table[h]].key != d) {
+                return 1;
+        }
+        if (cache.hash_table[slot_after(h, 1U)] != (int16_t)-1) {
+                return 1;
+        }
+
+        if (lru_cache_get(&cache, d, &val) != true || val != 4U) {
+                return 1;
+        }
+        if (lru_cache_get(&cache, c, &val) != true || val != 3U) {
+                return 1;
+        }
+        if (lru_cache_get(&cache, a, &val) != false
+            || lru_cache_get(&cache, b, &val) != false) {
+                return 1;
+        }
+
+        return 0;
+}
+
 #endif
 
 /* =========================================================================
@@ -901,6 +1075,7 @@ main(void)
         RUN_TEST(test_fill_to_capacity);
         RUN_TEST(test_invalid_key_rejected);
         RUN_TEST(test_capacity_clamping);
+        RUN_TEST(test_zero_capacity_holds_one);
         RUN_TEST(test_sequential_eviction);
 
 #if (LRU_CACHE_LOOKUP_STRATEGY == LRU_CACHE_LOOKUP_HASH)
@@ -910,6 +1085,8 @@ main(void)
         RUN_TEST(test_put_fails_gracefully_with_eviction);
         RUN_TEST(test_sequential_integer_keys);
         RUN_TEST(test_heavy_eviction_tombstone_cleanup);
+        RUN_TEST(test_evict_collided_run);
+        RUN_TEST(test_insert_reuses_tombstone);
 #endif
 
         printf("\n%d/%d tests passed.\n", g_tests_run - g_tests_failed,

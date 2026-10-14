@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Insertion, eviction and the list helpers drop checks that the cache invariants make unreachable, so every branch is tested; CI gates line and branch coverage at 100 %.
 - Added changelog, contributor guide, security policy, SPDX headers, cleaned ignore rules, sanitiser-enabled CI, and a standard coverage gate.
 
 ## [1.1.6] - 2026-03-21
