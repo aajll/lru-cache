@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- CI cross-builds the library with TI C2000 CGT 22.6.2 and 25.11.1 under the COFF and EABI object formats and both lookup strategies, with warnings as errors.
+
+### Fixed
+
+- `-Dlookup_strategy=linear` builds the linear strategy, and `lru_cache_dep` carries the strategy define to consumers. The test suite builds a library per strategy, so the linear lookup is tested.
+
 ### Changed
 
 - Added changelog, contributor guide, security policy, SPDX headers, cleaned ignore rules, sanitiser-enabled CI, and a standard coverage gate.
