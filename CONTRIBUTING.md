@@ -66,7 +66,7 @@ change is needed, not _what_ the diff already shows.
 - Open an issue first for non-trivial changes so the design can be agreed
   before implementation.
 - Keep PRs focused. One feature or one fix per PR.
-- All CI checks must pass: tests on Linux + macOS, ASan + UBSan, release
+- All CI checks must pass: tests under ASan + UBSan, release
   build, coverage gate.
 
 ## When in doubt
