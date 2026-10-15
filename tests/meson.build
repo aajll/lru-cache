@@ -33,3 +33,31 @@ foreach strategy : ['hash', 'linear']
     timeout: 30,
   )
 endforeach
+
+# Every C code block in the README, CONTRIBUTING.md and docs/ compiles against
+# the public header, so a documented signature cannot drift from the code.
+python = import('python').find_installation('python3')
+
+test(
+  'lru_cache docs examples',
+  python,
+  args: [
+    files('docs/check_snippets.py'),
+    '--root', meson.project_source_root(),
+    '--lang', 'c',
+    '--prelude', '#include "lru_cache.h"',
+    '--',
+  ] + meson.get_compiler('c').cmd_array() + [
+    '-std=c11',
+    '-Wall',
+    '-Wextra',
+    '-Wpedantic',
+    '-Werror',
+    '-Wno-unused-function',
+    '-Wno-unused-variable',
+    '-I' + (meson.project_source_root() / 'include'),
+    '-c', '{source}', '-o', '{object}',
+  ],
+  suite: 'docs',
+  timeout: 60,
+)
