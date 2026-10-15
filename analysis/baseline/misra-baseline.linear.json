@@ -1,0 +1,29 @@
+{
+  "schema": "misch/baseline@2",
+  "fingerprints": {
+    "43fad7c52451": {
+      "rule_id": "misra-c2012-2.5",
+      "file": "include/lru_cache.h",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 1
+    },
+    "4b347e12e94c": {
+      "rule_id": "misra-c2012-15.5",
+      "file": "src/lru_cache.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 6
+    },
+    "ae327932f3c0": {
+      "rule_id": "misra-c2012-8.7",
+      "file": "src/lru_cache.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 3
+    },
+    "cb6a90740d09": {
+      "rule_id": "misra-c2012-12.1",
+      "file": "src/lru_cache.c",
+      "message": "misra violation (use --rule-texts=<file> to get proper output)",
+      "count": 3
+    }
+  }
+}
