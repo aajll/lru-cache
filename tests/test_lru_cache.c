@@ -12,6 +12,7 @@
  */
 
 #include "lru_cache.h"
+#include "lru_cache_version.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -1058,6 +1059,21 @@ test_insert_reuses_tombstone(void)
 
 #endif
 
+/* The deprecated version header still exposes the macros from lru_cache.h. */
+static int
+test_version_macros(void)
+{
+        if (LRU_CACHE_VERSION_NUMBER
+            != ((LRU_CACHE_VERSION_MAJOR * 10000L)
+                + (LRU_CACHE_VERSION_MINOR * 100L) + LRU_CACHE_VERSION_PATCH)) {
+                return 1;
+        }
+        if (LRU_CACHE_VERSION[0] == '\0') {
+                return 1;
+        }
+        return 0;
+}
+
 /* =========================================================================
  * Entry point
  * ========================================================================= */
@@ -1079,6 +1095,7 @@ main(void)
         RUN_TEST(test_capacity_clamping);
         RUN_TEST(test_zero_capacity_holds_one);
         RUN_TEST(test_sequential_eviction);
+        RUN_TEST(test_version_macros);
 
 #if (LRU_CACHE_LOOKUP_STRATEGY == LRU_CACHE_LOOKUP_HASH)
         RUN_TEST(test_hash_collision_then_eviction);

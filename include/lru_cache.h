@@ -26,6 +26,33 @@
 #include <stdint.h>
 
 /* -------------------------------------------------------------------------
+ * Version
+ * ------------------------------------------------------------------------- */
+
+/**
+ * @name Version
+ * @brief Release of this header, for diagnostics and @c #if checks.
+ *
+ * @details
+ *    @c LRU_CACHE_VERSION_NUMBER is @c MAJOR*10000 @c + @c MINOR*100
+ *    @c + @c PATCH with type @c long, so it cannot overflow where @c int is
+ *    16 bits. The Meson build fails to configure when these values differ
+ *    from the project version.
+ * @{
+ */
+/* cppcheck-suppress-begin misra-c2012-2.5 ; @deviation Public version macros
+ * for consumer diagnostics and #if checks; the library does not use them. */
+#define LRU_CACHE_VERSION_MAJOR 1
+#define LRU_CACHE_VERSION_MINOR 1
+#define LRU_CACHE_VERSION_PATCH 7
+#define LRU_CACHE_VERSION       "1.1.7"
+#define LRU_CACHE_VERSION_NUMBER                                               \
+        ((LRU_CACHE_VERSION_MAJOR * 10000L) + (LRU_CACHE_VERSION_MINOR * 100L) \
+         + LRU_CACHE_VERSION_PATCH)
+/* cppcheck-suppress-end misra-c2012-2.5 ; @deviation As above. */
+/** @} */
+
+/* -------------------------------------------------------------------------
  * Lookup strategy identifiers
  * ------------------------------------------------------------------------- */
 
