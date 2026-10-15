@@ -73,7 +73,7 @@ Each macro is defined in `lru_cache.h` behind an `#ifndef` guard and is overridd
 | Macro | Default | Effect |
 | --- | --- | --- |
 | `LRU_CACHE_MAX_ENTRIES` | `16U` | Number of nodes, and the largest capacity, from 1 to 32767. Layout. |
-| `LRU_CACHE_HASH_TABLE_SIZE` | `37U` | Number of hash table slots, at least `LRU_CACHE_MAX_ENTRIES`. The table is allocated under both strategies. Layout. |
+| `LRU_CACHE_HASH_TABLE_SIZE` | `37U` | Number of hash table slots, from `LRU_CACHE_MAX_ENTRIES` to 65535. The table is allocated under both strategies. Layout. |
 | `LRU_CACHE_MAX_PROBES` | `8U` | Slots a hash lookup or insert examines, from 1 to `LRU_CACHE_HASH_TABLE_SIZE`. Hash strategy only. |
 | `LRU_CACHE_LOOKUP_STRATEGY` | `LRU_CACHE_LOOKUP_HASH` | `LRU_CACHE_LOOKUP_HASH` or `LRU_CACHE_LOOKUP_LINEAR`. |
 
