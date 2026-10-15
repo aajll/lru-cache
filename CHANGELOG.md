@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `lru-cache.pc` links `-llru-cache`, puts the `lru_cache/` header directory on the include path, and carries the lookup strategy define, so a consumer builds with `pkg-config --cflags --libs lru-cache`. CI installs each strategy and links a consumer through `pkg-config`.
 - `-Dlookup_strategy=linear` builds the linear strategy, and `lru_cache_dep` carries the strategy define to consumers. The test suite builds a library per strategy, so the linear lookup is tested.
+- `LRU_CACHE_HASH_TABLE_SIZE` above 65535 fails the build with a `_Static_assert`. The hash index is `uint16_t`, so slots from 65536 up were never used.
 
 ### Changed
 

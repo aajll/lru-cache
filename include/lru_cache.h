@@ -69,8 +69,8 @@
 /**
  * @brief Maximum number of entries in the cache.
  *
+ * From 1 to 32767 under both strategies, because node indices are int16_t.
  * For hash strategy: choose a value whose next prime fits the table size.
- * For linear strategy: any positive value up to UINT16_MAX works.
  */
 #ifndef LRU_CACHE_MAX_ENTRIES
 #define LRU_CACHE_MAX_ENTRIES 16U
@@ -79,8 +79,9 @@
 /**
  * @brief Hash table size.
  *
- * Must be >= LRU_CACHE_MAX_ENTRIES. A prime number reduces collisions, and
- * about twice LRU_CACHE_MAX_ENTRIES keeps rejected inserts rare.
+ * Must be >= LRU_CACHE_MAX_ENTRIES and <= 65535, because hash indices are
+ * uint16_t. A prime number reduces collisions, and about twice
+ * LRU_CACHE_MAX_ENTRIES keeps rejected inserts rare.
  * Only relevant when LRU_CACHE_LOOKUP_STRATEGY == LRU_CACHE_LOOKUP_HASH.
  */
 #ifndef LRU_CACHE_HASH_TABLE_SIZE
@@ -118,6 +119,9 @@ _Static_assert(LRU_CACHE_MAX_ENTRIES <= 32767U,
 
 _Static_assert(LRU_CACHE_HASH_TABLE_SIZE >= LRU_CACHE_MAX_ENTRIES,
                "LRU_CACHE_HASH_TABLE_SIZE must be >= LRU_CACHE_MAX_ENTRIES");
+
+_Static_assert(LRU_CACHE_HASH_TABLE_SIZE <= 65535U,
+               "LRU_CACHE_HASH_TABLE_SIZE must be <= UINT16_MAX (65535)");
 
 _Static_assert(LRU_CACHE_MAX_PROBES <= LRU_CACHE_HASH_TABLE_SIZE,
                "LRU_CACHE_MAX_PROBES must be <= LRU_CACHE_HASH_TABLE_SIZE");

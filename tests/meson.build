@@ -61,3 +61,16 @@ test(
   suite: 'docs',
   timeout: 60,
 )
+
+# The hash table is indexed by uint16_t, so a table larger than UINT16_MAX
+# must fail the build, and the largest valid size must still compile.
+cc = meson.get_compiler('c')
+table_size_src = '#define LRU_CACHE_HASH_TABLE_SIZE @0@U\n#include "lru_cache.h"\n'
+assert(
+  not cc.compiles(table_size_src.format(65536), include_directories: public_headers),
+  'LRU_CACHE_HASH_TABLE_SIZE above 65535 must fail the build',
+)
+assert(
+  cc.compiles(table_size_src.format(65535), include_directories: public_headers),
+  'LRU_CACHE_HASH_TABLE_SIZE of 65535 must compile',
+)
