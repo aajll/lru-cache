@@ -23,7 +23,7 @@ Compile `lru_cache.c` with the directory holding `lru_cache.h` on the include pa
 #include "lru_cache.h"
 ```
 
-`lru_cache_version.h` exists only in Meson builds, which generate it.
+`lru_cache.h` defines the version macros described in [api.md](api.md#version).
 
 ## Meson subproject
 
@@ -55,15 +55,14 @@ meson install -C build
 cc app.c -I/usr/local/include/lru_cache -L/usr/local/lib -llru-cache -o app
 ```
 
-The install contains the static archive `liblru-cache.a`, the header and `lru_cache_version.h` in a `lru_cache/` subdirectory, and `lru-cache.pc`. The `pkg-config` file carries the include root and the version but no link flags, so name the library on the link line, and either put `lru_cache/` on the include path as above or include the header by its subdirectory:
+The install contains the static archive `liblru-cache.a`, the headers in a `lru_cache/` subdirectory, and `lru-cache.pc`. The `pkg-config` file carries the include root and the version but no link flags, so name the library on the link line, and either put `lru_cache/` on the include path as above or include the header by its subdirectory:
 
 <!-- snippet: skip -->
 ```c
 #include <lru_cache/lru_cache.h>
-#include <lru_cache/lru_cache_version.h>
 ```
 
-`lru_cache_version.h` defines `LRU_CACHE_VERSION` as the version string and `LRU_CACHE_VERSION_MAJOR`, `LRU_CACHE_VERSION_MINOR` and `LRU_CACHE_VERSION_PATCH` as integers. An installed library keeps the strategy and the configuration it was built with.
+`lru_cache_version.h` is installed beside it as a deprecated header that includes `lru_cache.h`. An installed library keeps the strategy and the configuration it was built with.
 
 ## Configuration
 

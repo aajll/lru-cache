@@ -111,3 +111,25 @@ _Static_assert(sizeof(lru_cache_t) <= 256U,
 ```
 
 `sizeof` counts 16-bit words on a target where `CHAR_BIT` is 16, so express the budget in the target's units. [design.md](design.md#footprint) gives the size formula.
+
+## Version
+
+`lru_cache.h` defines the release it belongs to, so a copied-in header still identifies itself:
+
+<!-- snippet: skip -->
+```c
+#define LRU_CACHE_VERSION_MAJOR 1
+#define LRU_CACHE_VERSION_MINOR 1
+#define LRU_CACHE_VERSION_PATCH 7
+#define LRU_CACHE_VERSION "1.1.7"
+```
+
+`LRU_CACHE_VERSION_NUMBER` is `MAJOR * 10000 + MINOR * 100 + PATCH` as a `long`, so it holds any version where `int` is 16 bits. Compare it in the preprocessor to require a minimum release:
+
+```c
+#if LRU_CACHE_VERSION_NUMBER < 10107L
+#error "lru_cache 1.1.7 or later is required"
+#endif
+```
+
+`lru_cache_version.h` is a deprecated header that includes `lru_cache.h`, kept so existing includes compile until the next major release.

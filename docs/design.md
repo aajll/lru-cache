@@ -102,7 +102,7 @@ The library takes no locks and keeps no global state, so separate caches are ind
 
 ## MISRA C:2023
 
-The library is analysed with [`misch`](https://pypi.org/project/misch/), a cppcheck-based MISRA C:2023 checker, over `include/` and `src/`, once for each lookup strategy. Each run has its own baseline of accepted findings in `analysis/baseline/`, and CI fails on any finding outside it.
+The library is analysed with [`misch`](https://pypi.org/project/misch/), a cppcheck-based MISRA C:2023 checker, over `include/` and `src/`, once for each lookup strategy. Each run has its own baseline of accepted findings in `analysis/baseline/`, and CI fails on any finding outside it. The version macros in `lru_cache.h` carry an inline deviation of Rule 2.5 (unused macro), because they exist for consumers and the library does not use them.
 
 | Rule | Hash | Linear | Cause |
 | --- | --- | --- | --- |

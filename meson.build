@@ -14,32 +14,37 @@ project(
 
 project_description = 'A static-memory, deterministic Least Recently Used (LRU) cache.'
 
-# ── Version header ─────────────────────────────────────────────────────────────
+# ── Version ────────────────────────────────────────────────────────────────────
+# include/lru_cache.h defines the version macros, so a copy-in build has them.
+# Configuration fails when they differ from the project version.
 
-ver = meson.project_version().split('.')
-major = ver[0].to_int()
-minor = ver[1].to_int()
-patch = ver[2].to_int()
-
-conf = configuration_data()
-conf.set_quoted('VERSION', meson.project_version())
-conf.set('MAJOR', major)
-conf.set('MINOR', minor)
-conf.set('PATCH', patch)
-
-configure_file(
-  input: 'config' / 'lru_cache_version.h.in',
-  output: 'lru_cache_version.h',
-  configuration: conf,
-  install: true,
-  install_dir: get_option('includedir') / 'lru_cache',
-)
+fs = import('fs')
+version_parts = meson.project_version().split('.')
+version_macros = {
+  'LRU_CACHE_VERSION_MAJOR': version_parts[0],
+  'LRU_CACHE_VERSION_MINOR': version_parts[1],
+  'LRU_CACHE_VERSION_PATCH': version_parts[2],
+  'LRU_CACHE_VERSION': '"' + meson.project_version() + '"',
+}
+header_lines = []
+foreach line : fs.read('include' / 'lru_cache.h').split('\n')
+  header_lines += ' '.join(line.split())
+endforeach
+foreach name, value : version_macros
+  if '#define @0@ @1@'.format(name, value) not in header_lines
+    error('include/lru_cache.h must define @0@ as @1@'.format(name, value))
+  endif
+endforeach
 
 # ── Include directories ────────────────────────────────────────────────────────
 
 public_headers = include_directories('include')
 
-install_headers('include' / 'lru_cache.h', subdir: 'lru_cache')
+install_headers(
+  'include' / 'lru_cache.h',
+  'include' / 'lru_cache_version.h',
+  subdir: 'lru_cache',
+)
 
 # ── Application core library ───────────────────────────────────────────────────
 
