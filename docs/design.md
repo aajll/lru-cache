@@ -42,15 +42,16 @@ Tombstones that end a probe sequence carry no information. After an eviction, if
 
 ### Probe window and rejected inserts
 
-A new key must be placed within `LRU_CACHE_MAX_PROBES` slots of its hash, so that every lookup can find it within the same bound. If every slot in that window holds a live entry, other than the one about to be evicted, `lru_cache_put` returns false and changes nothing. How often this happens depends on how full the table is, and the default 17 slots for 16 entries is nearly full once the cache is:
+A new key must be placed within `LRU_CACHE_MAX_PROBES` slots of its hash, so that every lookup can find it within the same bound. If every slot in that window holds a live entry, other than the one about to be evicted, `lru_cache_put` returns false and changes nothing. How often this happens depends on how full the table is and on the probe limit:
 
-| Entries / table slots / probes | Keys 1 to 16 into an empty cache | New random keys rejected when full |
+| Entries / table slots / probes | Keys 1 to entries into an empty cache | New random keys rejected when full |
 | --- | --- | --- |
-| 16 / 17 / 4 (defaults) | 10 held | 59% |
+| 16 / 17 / 4 | 10 held | 59% |
 | 16 / 37 / 4 | 16 held | 4.4% |
 | 16 / 67 / 4 | 16 held | 0.56% |
-| 16 / 37 / 8 | 16 held | 0.24% |
+| 16 / 37 / 8 (defaults) | 16 held | 0.24% |
 | 16 / 17 / 17 | 16 held | 0% |
+| 32 / 67 / 8 | 32 held | 1.1% |
 
 The rates are from 10^6 pseudo-random keys on x86-64; they depend only on the hash and the configuration, not on the target. A rejected put is safe, because the cache never returns a wrong value, but the cache then holds fewer entries than its capacity. Size the table at about twice the entry count, raise the probe limit, or use the linear strategy when every insert must succeed. A probe limit equal to the table size never rejects, at the cost of a worst case that grows with the table.
 
@@ -76,9 +77,9 @@ List updates add a constant number of index writes to both.
 
 ## Footprint
 
-`sizeof(lru_cache_t)` is four 16-bit fields, `LRU_CACHE_MAX_ENTRIES` nodes of two `uint32_t` and two `int16_t` each, and `LRU_CACHE_HASH_TABLE_SIZE` `int16_t` slots, padded to the alignment of `uint32_t`. With the defaults that is 236 bytes on x86-64: 8 of fields, 192 of nodes, 34 of table and 2 of padding.
+`sizeof(lru_cache_t)` is four 16-bit fields, `LRU_CACHE_MAX_ENTRIES` nodes of two `uint32_t` and two `int16_t` each, and `LRU_CACHE_HASH_TABLE_SIZE` `int16_t` slots, padded to the alignment of `uint32_t`. With the defaults that is 276 bytes on x86-64: 8 of fields, 192 of nodes, 74 of table and 2 of padding.
 
-On a target where `CHAR_BIT` is 16, `sizeof` counts 16-bit words and a `uint32_t` takes two. A node is then 6 words, and the default structure is 118 words, the same 236 octets. The table is allocated under both strategies, so a linear build can save its space only by setting `LRU_CACHE_HASH_TABLE_SIZE` to `LRU_CACHE_MAX_ENTRIES`, the smallest value the header accepts.
+On a target where `CHAR_BIT` is 16, `sizeof` counts 16-bit words and a `uint32_t` takes two. A node is then 6 words, and the default structure is 138 words, the same 276 octets. The table is allocated under both strategies, so a linear build can save its space only by setting `LRU_CACHE_HASH_TABLE_SIZE` to `LRU_CACHE_MAX_ENTRIES`, the smallest value the header accepts.
 
 `LRU_CACHE_MAX_ENTRIES` and `LRU_CACHE_HASH_TABLE_SIZE` change this layout, so the library and its callers must be compiled with the same values. [integration.md](integration.md#configuration) shows how.
 

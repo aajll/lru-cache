@@ -4,7 +4,7 @@
 
 ## Conventions
 
-- The cache is an `lru_cache_t` that the caller owns. It may be static, on the stack, or embedded in another structure; at the default configuration it is 236 bytes on x86-64, so a static instance is usual on small stacks. No function allocates or blocks.
+- The cache is an `lru_cache_t` that the caller owns. It may be static, on the stack, or embedded in another structure; at the default configuration it is 276 bytes on x86-64, so a static instance is usual on small stacks. No function allocates or blocks.
 - The members of `lru_cache_t` are visible because the caller allocates it, but treat them as private: read and change the cache only through the functions.
 - Keys and values are `uint32_t`. Any key except `LRU_CACHE_INVALID_KEY` (`0xFFFFFFFFU`), which marks an empty node, may be stored.
 - Every pointer argument is checked. A NULL argument never dereferences.
@@ -73,11 +73,11 @@ Each macro is defined in `lru_cache.h` behind an `#ifndef` guard and is overridd
 | Macro | Default | Effect |
 | --- | --- | --- |
 | `LRU_CACHE_MAX_ENTRIES` | `16U` | Number of nodes, and the largest capacity, from 1 to 32767. Layout. |
-| `LRU_CACHE_HASH_TABLE_SIZE` | `17U` | Number of hash table slots, at least `LRU_CACHE_MAX_ENTRIES`. The table is allocated under both strategies. Layout. |
-| `LRU_CACHE_MAX_PROBES` | `4U` | Slots a hash lookup or insert examines, from 1 to `LRU_CACHE_HASH_TABLE_SIZE`. Hash strategy only. |
+| `LRU_CACHE_HASH_TABLE_SIZE` | `37U` | Number of hash table slots, at least `LRU_CACHE_MAX_ENTRIES`. The table is allocated under both strategies. Layout. |
+| `LRU_CACHE_MAX_PROBES` | `8U` | Slots a hash lookup or insert examines, from 1 to `LRU_CACHE_HASH_TABLE_SIZE`. Hash strategy only. |
 | `LRU_CACHE_LOOKUP_STRATEGY` | `LRU_CACHE_LOOKUP_HASH` | `LRU_CACHE_LOOKUP_HASH` or `LRU_CACHE_LOOKUP_LINEAR`. |
 
-The limits are `_Static_assert`s in the header, so an out-of-range value stops every translation unit that includes it. The default table of 17 slots for 16 entries rejects most new keys once the cache is full; size the table at about twice `LRU_CACHE_MAX_ENTRIES` or raise `LRU_CACHE_MAX_PROBES`, as [design.md](design.md#probe-window-and-rejected-inserts) shows.
+The limits are `_Static_assert`s in the header, so an out-of-range value stops every translation unit that includes it. The defaults hold a full cache and reject 0.24% of new keys once it is full. A larger `LRU_CACHE_MAX_ENTRIES` needs a larger table, and the rate rises with the entry count; [design.md](design.md#probe-window-and-rejected-inserts) gives measured rates.
 
 ## Recipes
 
@@ -106,7 +106,7 @@ cached_checksum(lru_cache_t *cache, uint32_t block)
 Check the size of the structure where the cache is declared, so a configuration change that outgrows its budget stops the build:
 
 ```c
-_Static_assert(sizeof(lru_cache_t) <= 256U,
+_Static_assert(sizeof(lru_cache_t) <= 512U,
                "LRU cache exceeds its RAM budget");
 ```
 

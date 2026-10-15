@@ -12,9 +12,9 @@
  * Configuration macros (define before including or pass via -D):
  *   LRU_CACHE_MAX_ENTRIES      - Max items stored (default 16).
  *   LRU_CACHE_HASH_TABLE_SIZE  - Hash table slots; prime >= MAX_ENTRIES
- *                                (default 17).
+ *                                (default 37).
  *   LRU_CACHE_MAX_PROBES       - Collision probe limit, bounds WCET
- *                                (default 4).
+ *                                (default 8).
  *   LRU_CACHE_LOOKUP_STRATEGY  - LRU_CACHE_LOOKUP_HASH or
  *                                LRU_CACHE_LOOKUP_LINEAR.
  */
@@ -79,11 +79,12 @@
 /**
  * @brief Hash table size.
  *
- * Must be >= LRU_CACHE_MAX_ENTRIES. A prime number reduces collisions.
+ * Must be >= LRU_CACHE_MAX_ENTRIES. A prime number reduces collisions, and
+ * about twice LRU_CACHE_MAX_ENTRIES keeps rejected inserts rare.
  * Only relevant when LRU_CACHE_LOOKUP_STRATEGY == LRU_CACHE_LOOKUP_HASH.
  */
 #ifndef LRU_CACHE_HASH_TABLE_SIZE
-#define LRU_CACHE_HASH_TABLE_SIZE 17U
+#define LRU_CACHE_HASH_TABLE_SIZE 37U
 #endif
 
 /**
@@ -93,7 +94,7 @@
  * Must satisfy: LRU_CACHE_MAX_PROBES <= LRU_CACHE_HASH_TABLE_SIZE.
  */
 #ifndef LRU_CACHE_MAX_PROBES
-#define LRU_CACHE_MAX_PROBES 4U
+#define LRU_CACHE_MAX_PROBES 8U
 #endif
 
 /**
@@ -212,7 +213,9 @@ bool lru_cache_get(lru_cache_t *cache_ptr, uint32_t key, uint32_t *out_value);
  * @param key        Key to insert/update (must not equal
  * LRU_CACHE_INVALID_KEY).
  * @param value      Value to store.
- * @return true on success, false on invalid arguments or internal error.
+ * @return true on success; false on invalid arguments, or under the hash
+ *         strategy when no slot within LRU_CACHE_MAX_PROBES of the key's
+ *         hash can take a new key.
  */
 bool lru_cache_put(lru_cache_t *cache_ptr, uint32_t key, uint32_t value);
 

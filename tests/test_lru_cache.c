@@ -283,7 +283,7 @@ test_fill_to_capacity(void)
 
         /*
          * Use keys spaced 100 apart to reduce hash-collision probability
-         * across the default 17-slot table.
+         * across the default 37-slot table.
          */
         lru_cache_init(&cache, 8U);
 
@@ -480,17 +480,12 @@ test_hash_collision_then_eviction(void)
         /* Use a small table to force predictable collisions */
         lru_cache_init(&cache, 2U);
 
-        /*
-         * Force a hash collision by computing keys that map to the same slot.
-         * The default Fibonacci hash is: (key * 0x9E3779B9) % HASH_TABLE_SIZE
-         * With HASH_TABLE_SIZE = 17 (default prime), we can find colliding
-         * pairs.
-         *
-         * We iterate until we find two distinct keys with the same hash.
-         */
-        uint32_t key_a = 0x5A4E68C3U; /* chosen to collide with key_b below */
-        uint32_t key_b =
-            0xB1FBD799U; /* collides with key_a at default table size */
+        /* Search for a second key with the same hash as the first. */
+        uint32_t key_a = 0x5A4E68C3U;
+        uint32_t key_b = key_a + 1U;
+        while (compute_hash(key_b) != compute_hash(key_a)) {
+                key_b++;
+        }
 
         /* Insert A (occupies natural hash slot) */
         if (lru_cache_put(&cache, key_a, 0xAA55u) != true) {
@@ -838,8 +833,8 @@ test_put_fails_gracefully_with_eviction(void)
 }
 
 /* =========================================================================
- * Test 16: Sequential integer keys 1..N — size matches successful inserts,
- *          all successes retrievable
+ * Test 16: Sequential integer keys 1..N are all held by a cache of
+ *          capacity N with the default table
  * ========================================================================= */
 
 static int
@@ -858,7 +853,10 @@ test_sequential_integer_keys(void)
                 }
         }
 
-        /* size must equal the number of successful insertions. */
+        /* The default table and probe limit hold a full cache. */
+        if (successes != (uint16_t)LRU_CACHE_MAX_ENTRIES) {
+                return 1;
+        }
         if (cache.size != successes) {
                 return 1;
         }
@@ -974,7 +972,8 @@ test_evict_collided_run(void)
          * last sits on the final probe slot.
          */
         for (uint16_t i = 0U; i < LRU_CACHE_MAX_PROBES; i++) {
-                uint16_t far = slot_after(h, (uint16_t)(6U + (2U * i)));
+                uint16_t far = slot_after(
+                    h, (uint16_t)(LRU_CACHE_MAX_PROBES + 2U + (2U * i)));
                 uint32_t fresh = key_with_hash(far, 0x10000U);
 
                 if (lru_cache_put(&cache, fresh, 100U + i) != true) {
@@ -1056,6 +1055,62 @@ test_insert_reuses_tombstone(void)
         return 0;
 }
 
+/* =========================================================================
+ * A new key whose probe window meets live entries skips them, and takes the
+ * eviction victim's slot when the victim sits in that window
+ * ========================================================================= */
+
+static int
+test_insert_takes_victim_slot(void)
+{
+        lru_cache_t cache;
+        uint32_t val = 0U;
+        const uint16_t h = 5U;
+        uint32_t a = key_with_hash(h, 1U);
+        uint32_t b = key_with_hash(h, a + 1U);
+        uint32_t c = key_with_hash(h, b + 1U);
+        uint32_t d = key_with_hash(h, c + 1U);
+
+        lru_cache_init(&cache, 2U);
+
+        /* b probes past the live a, which is not being evicted. */
+        if (lru_cache_put(&cache, a, 1U) != true
+            || lru_cache_put(&cache, b, 2U) != true) {
+                return 1;
+        }
+        if (cache.nodes[cache.hash_table[slot_after(h, 1U)]].key != b) {
+                return 1;
+        }
+
+        /* c evicts a and takes its slot at h. */
+        if (lru_cache_put(&cache, c, 3U) != true) {
+                return 1;
+        }
+        if (cache.nodes[cache.hash_table[h]].key != c) {
+                return 1;
+        }
+
+        /* d evicts b: it skips the live c at h and takes b's slot. */
+        if (lru_cache_put(&cache, d, 4U) != true) {
+                return 1;
+        }
+        if (cache.nodes[cache.hash_table[slot_after(h, 1U)]].key != d) {
+                return 1;
+        }
+
+        if (lru_cache_get(&cache, c, &val) != true || val != 3U) {
+                return 1;
+        }
+        if (lru_cache_get(&cache, d, &val) != true || val != 4U) {
+                return 1;
+        }
+        if (lru_cache_get(&cache, a, &val) != false
+            || lru_cache_get(&cache, b, &val) != false) {
+                return 1;
+        }
+
+        return 0;
+}
 #endif
 
 /* The version number agrees with its parts. */
@@ -1105,6 +1160,7 @@ main(void)
         RUN_TEST(test_heavy_eviction_tombstone_cleanup);
         RUN_TEST(test_evict_collided_run);
         RUN_TEST(test_insert_reuses_tombstone);
+        RUN_TEST(test_insert_takes_victim_slot);
 #endif
 
         printf("\n%d/%d tests passed.\n", g_tests_run - g_tests_failed,

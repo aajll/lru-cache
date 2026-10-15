@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `LRU_CACHE_HASH_TABLE_SIZE` defaults to 37 and `LRU_CACHE_MAX_PROBES` to 8, so a default cache holds 16 entries and rejects 0.24% of new keys once full, where 17 and 4 held 10 sequential keys and rejected 59%. `sizeof(lru_cache_t)` grows from 236 to 276 octets; code that sizes or places the structure needs the new value.
 - `lru_cache.h` defines `LRU_CACHE_VERSION_MAJOR`, `_MINOR`, `_PATCH`, `LRU_CACHE_VERSION` and a new `LRU_CACHE_VERSION_NUMBER` (`long`, `MAJOR * 10000 + MINOR * 100 + PATCH`), so a copied-in header carries its version. Meson fails to configure when the header and `project(version:)` disagree, and the build needs Meson 0.57 or later.
 - Insertion, eviction and the list helpers drop checks that the cache invariants make unreachable, so every branch is tested; CI gates line and branch coverage at 100 %.
 - CI runs a MISRA C:2023 analysis with `misch`, for the hash and linear lookup strategies, against baselines in `analysis/baseline/` that record the existing findings, and checks formatting with the clang-format release pinned in `scripts/format.sh`.
