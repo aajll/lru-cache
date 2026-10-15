@@ -71,7 +71,7 @@ Every configuration macro in `lru_cache.h` sits behind an `#ifndef` guard, so a 
 `LRU_CACHE_MAX_ENTRIES` and `LRU_CACHE_HASH_TABLE_SIZE` set the size of the arrays in `lru_cache_t`, which the caller allocates and the library indexes. The library and every file that includes the header must be compiled with the same values. In a copy-in build, put the definitions on the compiler command line for the whole project. In a Meson build, the top-level `c_args` also apply to subprojects, so one setting reaches both:
 
 ```sh
-meson setup build "-Dc_args=-DLRU_CACHE_MAX_ENTRIES=32U -DLRU_CACHE_HASH_TABLE_SIZE=37U"
+meson setup build "-Dc_args=-DLRU_CACHE_MAX_ENTRIES=32U -DLRU_CACHE_HASH_TABLE_SIZE=67U"
 ```
 
 `LRU_CACHE_MAX_PROBES` and `LRU_CACHE_LOOKUP_STRATEGY` are read only by `src/lru_cache.c`. In a Meson build, select the strategy with the `lookup_strategy` option rather than `c_args`, because the build already defines `LRU_CACHE_LOOKUP_STRATEGY` from that option.
