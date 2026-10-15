@@ -131,5 +131,3 @@ _Static_assert(sizeof(lru_cache_t) <= 256U,
 #error "lru_cache 1.1.7 or later is required"
 #endif
 ```
-
-`lru_cache_version.h` is a deprecated header that includes `lru_cache.h`, kept so existing includes compile until the next major release.

@@ -12,7 +12,6 @@
  */
 
 #include "lru_cache.h"
-#include "lru_cache_version.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -1059,7 +1058,7 @@ test_insert_reuses_tombstone(void)
 
 #endif
 
-/* The deprecated version header still exposes the macros from lru_cache.h. */
+/* The version number agrees with its parts. */
 static int
 test_version_macros(void)
 {
