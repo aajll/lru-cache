@@ -79,6 +79,9 @@ pkg.generate(
   description: project_description,
   filebase: 'lru-cache',
   version: meson.project_version(),
+  libraries: lru_cache_lib,
+  subdirs: 'lru_cache',
+  extra_cflags: lru_strategy_arg,
 )
 
 # ── Host unit tests ────────────────────────────────────────────────────────────

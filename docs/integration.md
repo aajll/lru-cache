@@ -52,15 +52,10 @@ meson setup build -Dlru-cache:lookup_strategy=linear
 meson setup build --buildtype=release -Dbuild_tests=false --prefix=/usr/local
 meson compile -C build
 meson install -C build
-cc app.c -I/usr/local/include/lru_cache -L/usr/local/lib -llru-cache -o app
+cc app.c $(pkg-config --cflags --libs lru-cache) -o app
 ```
 
-The install contains the static archive `liblru-cache.a`, the headers in a `lru_cache/` subdirectory, and `lru-cache.pc`. The `pkg-config` file carries the include root and the version but no link flags, so name the library on the link line, and either put `lru_cache/` on the include path as above or include the header by its subdirectory:
-
-<!-- snippet: skip -->
-```c
-#include <lru_cache/lru_cache.h>
-```
+The install contains the static archive `liblru-cache.a`, the header in a `lru_cache/` subdirectory, and `lru-cache.pc`. The `pkg-config` file puts `lru_cache/` on the include path, so the consumer writes `#include "lru_cache.h"`, links `-llru-cache`, and defines `LRU_CACHE_LOOKUP_STRATEGY` as `lru_cache_dep` does. A Meson consumer writes `dependency('lru-cache')`.
 
 An installed library keeps the strategy and the configuration it was built with.
 
