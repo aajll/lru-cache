@@ -73,6 +73,24 @@ jobs:
       - name: Build
         run: meson compile -C build
 
+      - name: Link a consumer through pkg-config
+        run: |
+          meson install -C build --destdir "$PWD/staging"
+          export PKG_CONFIG_SYSROOT_DIR="$PWD/staging"
+          export PKG_CONFIG_PATH="$(dirname "$(find "$PWD/staging" -name lru-cache.pc)")"
+          flags="$(pkg-config --cflags --libs lru-cache)"
+          echo "$flags"
+          case " $flags " in
+            *" -llru-cache "*) ;;
+            *) echo "missing -llru-cache"; exit 1 ;;
+          esac
+          case " $flags " in
+            *"/include/lru_cache "*) ;;
+            *) echo "missing the lru_cache/ include directory"; exit 1 ;;
+          esac
+          cc -std=c11 -Wall -Wextra -Werror tests/install_consumer.c $flags -o install_consumer
+          ./install_consumer
+
   # ---------------------------------------------------------------------------
   # Code coverage gate. Builds with gcov instrumentation, runs the full
   # test suite, and fails the job if line or branch coverage drops below
