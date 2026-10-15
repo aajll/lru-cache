@@ -62,7 +62,7 @@ The install contains the static archive `liblru-cache.a`, the headers in a `lru_
 #include <lru_cache/lru_cache.h>
 ```
 
-`lru_cache_version.h` is installed beside it as a deprecated header that includes `lru_cache.h`. An installed library keeps the strategy and the configuration it was built with.
+An installed library keeps the strategy and the configuration it was built with.
 
 ## Configuration
 

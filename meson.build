@@ -42,7 +42,6 @@ public_headers = include_directories('include')
 
 install_headers(
   'include' / 'lru_cache.h',
-  'include' / 'lru_cache_version.h',
   subdir: 'lru_cache',
 )
 

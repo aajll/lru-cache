@@ -45,7 +45,7 @@ Coverage commands are in `CONTRIBUTING.md`.
 
 ### 1.2 Notes
 
-- `include/lru_cache.h` defines the version macros, and `meson setup` fails when they differ from `project(version:)`, so a release updates both. `include/lru_cache_version.h` is a deprecated header that includes `lru_cache.h`.
+- `include/lru_cache.h` defines the version macros, and `meson setup` fails when they differ from `project(version:)`, so a release updates both.
 - The build produces only a static library, installed as `liblru-cache.a` with headers under `lru_cache/`, and `lru-cache.pc`. The Meson options are `build_tests` and `lookup_strategy`; `lru_cache_dep` carries the strategy define to consumers.
 - `LRU_CACHE_MAX_ENTRIES` and `LRU_CACHE_HASH_TABLE_SIZE` change the layout of `lru_cache_t` and must match between the library and its callers. `LRU_CACHE_MAX_PROBES` is read only by `src/lru_cache.c`.
 
