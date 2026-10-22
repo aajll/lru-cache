@@ -43,9 +43,9 @@
 /* cppcheck-suppress-begin misra-c2012-2.5 ; @deviation Public version macros
  * for consumer diagnostics and #if checks; the library does not use them. */
 #define LRU_CACHE_VERSION_MAJOR 1
-#define LRU_CACHE_VERSION_MINOR 1
-#define LRU_CACHE_VERSION_PATCH 7
-#define LRU_CACHE_VERSION       "1.1.7"
+#define LRU_CACHE_VERSION_MINOR 2
+#define LRU_CACHE_VERSION_PATCH 0
+#define LRU_CACHE_VERSION       "1.2.0"
 #define LRU_CACHE_VERSION_NUMBER                                               \
         ((LRU_CACHE_VERSION_MAJOR * 10000L) + (LRU_CACHE_VERSION_MINOR * 100L) \
          + LRU_CACHE_VERSION_PATCH)

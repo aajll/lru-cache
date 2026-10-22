@@ -119,15 +119,15 @@ _Static_assert(sizeof(lru_cache_t) <= 512U,
 <!-- snippet: skip -->
 ```c
 #define LRU_CACHE_VERSION_MAJOR 1
-#define LRU_CACHE_VERSION_MINOR 1
-#define LRU_CACHE_VERSION_PATCH 7
-#define LRU_CACHE_VERSION "1.1.7"
+#define LRU_CACHE_VERSION_MINOR 2
+#define LRU_CACHE_VERSION_PATCH 0
+#define LRU_CACHE_VERSION "1.2.0"
 ```
 
 `LRU_CACHE_VERSION_NUMBER` is `MAJOR * 10000 + MINOR * 100 + PATCH` as a `long`, so it holds any version where `int` is 16 bits. Compare it in the preprocessor to require a minimum release:
 
 ```c
-#if LRU_CACHE_VERSION_NUMBER < 10107L
-#error "lru_cache 1.1.7 or later is required"
+#if LRU_CACHE_VERSION_NUMBER < 10200L
+#error "lru_cache 1.2.0 or later is required"
 #endif
 ```
